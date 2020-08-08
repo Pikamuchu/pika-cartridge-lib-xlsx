@@ -26,8 +26,8 @@ describe('XLSX library', () => {
     });
 
     let data = [
-        { S: 1, h: 2, e: 3, e_1: 4, t: 5, J: 6, S_1: 7 },
-        { S: 2, h: 3, e: 4, e_1: 5, t: 6, J: 7, S_1: 8 }
+        { S: '1', h: '2', e: '3', e_1: '4', t: '5', J: '6', S_1: '7' },
+        { S: '2', h: '3', e: '4', e_1: '5', t: '6', J: '7', S_1: '8' }
     ];
 
     describe('XLSX initialization', () => {

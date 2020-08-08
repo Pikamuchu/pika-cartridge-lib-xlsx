@@ -33,7 +33,7 @@
     },
     "homepage": "https://github.com/pikamachu/pika-cartridge-lib-xlsx",
     "devDependencies": {
-        "xlsx": "0.16.5",
+        "xlsx": "0.7.12",
         "@babel/cli": "^7.8.4",
         "@babel/core": "^7.9.0",
         "@babel/node": "^7.8.7",

@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./xlsx.mini.js');
+module.exports = require('./xlsx');
