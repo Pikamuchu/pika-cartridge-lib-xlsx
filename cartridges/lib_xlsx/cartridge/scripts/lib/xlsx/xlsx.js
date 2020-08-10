@@ -3,7 +3,7 @@
 'use strict';
 
 var _fs = require('*/cartridge/scripts/lib/fs/index');
-var jszip = require('./jszip');
+var jszip = require('*/cartridge/scripts/lib/jszip/index');
 
 var current_codepage = 1252;
 
@@ -10716,7 +10716,7 @@ function writeSync(wb, opts) {
             return _fs.writeFileSync(
                 o.file,
                 z.generate({
-                    type: 'string'
+                    type: 'nodebuffer'
                 })
             );
 
