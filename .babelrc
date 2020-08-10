@@ -1,5 +1,13 @@
 {
-    "presets": ["@babel/preset-env"],
-    "plugins": ["@babel/transform-runtime"],
-    "ignore": ["node_modules"]
+    "presets": [
+        [
+            "@babel/preset-env",
+            {
+                "modules": false,
+                "exclude": ["@babel/plugin-transform-typeof-symbol"]
+            }
+        ]
+    ],
+    "ignore": ["node_modules"],
+    "comments": false
 }

@@ -18,6 +18,11 @@
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
             "sourceMaps": true
+        },
+        {
+            "type": "prophet",
+            "request": "launch",
+            "name": "Attach to Sandbox"
         }
     ]
 }
