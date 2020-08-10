@@ -1,10 +1,7 @@
-/* ods.js (C) 2014 SheetJS -- http://sheetjs.com */
-
 'use strict';
 
 var ODS = {};
 
-/* Open Document Format for Office Applications (OpenDocument) Version 1.2 */
 var get_utils = function get_utils() {
     return require('./xlsx').utils;
 };
@@ -109,8 +106,7 @@ var rencoding = {
     '<': '&lt;',
     '&': '&amp;'
 };
-var rencstr = '&<>\'"'.split(''); // TODO: CP remap (need to read file version to determine OS)
-
+var rencstr = '&<>\'"'.split('');
 var encregex = /&[a-z]*;/g,
     coderegex = /_x([\da-fA-F]+)_/g;
 
@@ -146,8 +142,6 @@ function parsexmlbool(value, tag) {
         case 'TRUE':
             return true;
 
-        /* case '0': case 'false': case 'FALSE':*/
-
         default:
             return false;
     }
@@ -157,7 +151,6 @@ function datenum(v) {
     var epoch = Date.parse(v);
     return (epoch + 2209161600000) / (24 * 60 * 60 * 1000);
 }
-/* ISO 8601 Duration */
 
 function parse_isodur(s) {
     var sec = 0,
@@ -178,18 +171,12 @@ function parse_isodur(s) {
             case 'D':
                 mt *= 24;
 
-            /* falls through */
-
             case 'H':
                 mt *= 60;
-
-            /* falls through */
 
             case 'M':
                 if (!time) throw new Error('Unsupported ISO Duration Field: M');
                 else mt *= 60;
-
-            /* falls through */
 
             case 'S':
                 break;
@@ -200,7 +187,6 @@ function parse_isodur(s) {
 
     return sec;
 }
-/* copied from js-xls (C) SheetJS Apache2 license */
 
 function xlml_normalize(d) {
     if (has_buf && Buffer.isBuffer(d)) return d.toString('utf8');
@@ -209,8 +195,6 @@ function xlml_normalize(d) {
 }
 
 var xlmlregex = /<(\/?)([a-z0-9]*:|)([\w-]+)[^>]*>/gm;
-/* Part 3 Section 4 Manifest File */
-
 var CT_ODS = 'application/vnd.oasis.opendocument.spreadsheet';
 
 var parse_manifest = function parse_manifest(d, opts) {
@@ -222,23 +206,17 @@ var parse_manifest = function parse_manifest(d, opts) {
         switch (Rn[3]) {
             case 'manifest':
                 break;
-            // 4.2 <manifest:manifest>
 
             case 'file-entry':
-                // 4.3 <manifest:file-entry>
                 FEtag = parsexmltag(Rn[0]);
                 if (FEtag.path == '/' && FEtag.type !== CT_ODS)
                     throw new Error('This OpenDocument is not a spreadsheet');
                 break;
 
-            case 'encryption-data': // 4.4 <manifest:encryption-data>
-
-            case 'algorithm': // 4.5 <manifest:algorithm>
-
-            case 'start-key-generation': // 4.6 <manifest:start-key-generation>
-
+            case 'encryption-data':
+            case 'algorithm':
+            case 'start-key-generation':
             case 'key-derivation':
-                // 4.7 <manifest:key-derivation>
                 throw new Error('Unsupported ODS Encryption');
 
             default:
@@ -293,7 +271,6 @@ var utf8read = function utf8reada(orig) {
 
 var parse_content_xml = (function() {
     var number_formats = {
-        /* ods name: [short ssf fmt, long ssf fmt] */
         day: ['d', 'dd'],
         month: ['m', 'mm'],
         year: ['y', 'yy'],
@@ -337,7 +314,6 @@ var parse_content_xml = (function() {
         while ((Rn = xlmlregex.exec(str))) {
             switch (Rn[3]) {
                 case 'table':
-                    // 9.1.2 <table:table>
                     if (Rn[1] === '/') {
                         if (range.e.c >= range.s.c && range.e.r >= range.s.r)
                             ws['!ref'] = get_utils().encode_range(range);
@@ -356,18 +332,14 @@ var parse_content_xml = (function() {
                     break;
 
                 case 'table-row':
-                    // 9.1.3 <table:table-row>
                     if (Rn[1] === '/') break;
                     ++R;
                     C = -1;
                     break;
 
                 case 'covered-table-cell':
-                    // 9.1.5 table:covered-table-cell
                     ++C;
                     break;
-
-                /* stub */
 
                 case 'table-cell':
                     if (Rn[0].charAt(Rn[0].length - 2) === '/') {
@@ -401,7 +373,6 @@ var parse_content_xml = (function() {
                             };
                             merges.push(mrange);
                         }
-                        /* 19.385 office:value-type */
 
                         switch (q.t) {
                             case 'boolean':
@@ -456,44 +427,29 @@ var parse_content_xml = (function() {
                     }
 
                     break;
-                // 9.1.4 <table:table-cell>
 
-                /* pure state */
-
-                case 'document-content': // 3.1.3.2 <office:document-content>
-
-                case 'spreadsheet': // 3.7 <office:spreadsheet>
-
-                case 'scripts': // 3.12 <office:scripts>
-
+                case 'document-content':
+                case 'spreadsheet':
+                case 'scripts':
                 case 'font-face-decls':
-                    // 3.14 <office:font-face-decls>
                     if (Rn[1] === '/') {
                         if ((tmp = state.pop())[0] !== Rn[3]) throw 'Bad state: ' + tmp;
                     } else if (Rn[0].charAt(Rn[0].length - 2) !== '/') state.push([Rn[3], true]);
 
                     break;
 
-                /* ignore state */
-
-                case 'shapes': // 9.2.8 <table:shapes>
-
+                case 'shapes':
                 case 'frame':
-                    // 10.4.2 <draw:frame>
                     if (Rn[1] === '/') {
                         if ((tmp = state.pop())[0] !== Rn[3]) throw 'Bad state: ' + tmp;
                     } else if (Rn[0].charAt(Rn[0].length - 2) !== '/') state.push([Rn[3], false]);
 
                     break;
 
-                case 'number-style': // 16.27.2 <number:number-style>
-
-                case 'percentage-style': // 16.27.9 <number:percentage-style>
-
-                case 'date-style': // 16.27.10 <number:date-style>
-
+                case 'number-style':
+                case 'percentage-style':
+                case 'date-style':
                 case 'time-style':
-                    // 16.27.18 <number:time-style>
                     if (Rn[1] === '/') {
                         number_format_map[NFtag.name] = NF;
                         if ((tmp = state.pop())[0] !== Rn[3]) throw 'Bad state: ' + tmp;
@@ -507,42 +463,32 @@ var parse_content_xml = (function() {
 
                 case 'script':
                     break;
-                // 3.13 <office:script>
 
                 case 'automatic-styles':
                     break;
-                // 3.15.3 <office:automatic-styles>
 
                 case 'style':
                     break;
-                // 16.2 <style:style>
 
                 case 'font-face':
                     break;
-                // 16.21 <style:font-face>
 
                 case 'paragraph-properties':
                     break;
-                // 17.6 <style:paragraph-properties>
 
                 case 'table-properties':
                     break;
-                // 17.15 <style:table-properties>
 
                 case 'table-column-properties':
                     break;
-                // 17.16 <style:table-column-properties>
 
                 case 'table-row-properties':
                     break;
-                // 17.17 <style:table-row-properties>
 
                 case 'table-cell-properties':
                     break;
-                // 17.18 <style:table-cell-properties>
 
                 case 'number':
-                    // 16.27.3 <number:number>
                     switch (state[state.length - 1][0]) {
                         case 'time-style':
                         case 'date-style':
@@ -553,28 +499,17 @@ var parse_content_xml = (function() {
 
                     break;
 
-                case 'day': // 16.27.11 <number:day>
-
-                case 'month': // 16.27.12 <number:month>
-
-                case 'year': // 16.27.13 <number:year>
-
-                case 'era': // 16.27.14 <number:era>
-
-                case 'day-of-week': // 16.27.15 <number:day-of-week>
-
-                case 'week-of-year': // 16.27.16 <number:week-of-year>
-
-                case 'quarter': // 16.27.17 <number:quarter>
-
-                case 'hours': // 16.27.19 <number:hours>
-
-                case 'minutes': // 16.27.20 <number:minutes>
-
-                case 'seconds': // 16.27.21 <number:seconds>
-
+                case 'day':
+                case 'month':
+                case 'year':
+                case 'era':
+                case 'day-of-week':
+                case 'week-of-year':
+                case 'quarter':
+                case 'hours':
+                case 'minutes':
+                case 'seconds':
                 case 'am-pm':
-                    // 16.27.22 <number:am-pm>
                     switch (state[state.length - 1][0]) {
                         case 'time-style':
                         case 'date-style':
@@ -587,18 +522,14 @@ var parse_content_xml = (function() {
 
                 case 'boolean-style':
                     break;
-                // 16.27.23 <number:boolean-style>
 
                 case 'boolean':
                     break;
-                // 16.27.24 <number:boolean>
 
                 case 'text-style':
                     break;
-                // 16.27.25 <number:text-style>
 
                 case 'text':
-                    // 16.27.26 <number:text>
                     if (Rn[0].substr(-2) === '/>') break;
                     else if (Rn[1] === '/')
                         switch (state[state.length - 1][0]) {
@@ -613,42 +544,33 @@ var parse_content_xml = (function() {
 
                 case 'text-content':
                     break;
-                // 16.27.27 <number:text-content>
 
                 case 'text-properties':
                     break;
-                // 16.27.27 <style:text-properties>
 
                 case 'body':
                     break;
-                // 3.3 16.9.6 19.726.3
 
                 case 'forms':
                     break;
-                // 12.25.2 13.2
 
                 case 'table-column':
                     break;
-                // 9.1.6 <table:table-column>
 
                 case 'graphic-properties':
                     break;
 
                 case 'calculation-settings':
                     break;
-                // 9.4.1 <table:calculation-settings>
 
                 case 'named-expressions':
                     break;
-                // 9.4.11 <table:named-expressions>
 
                 case 'named-range':
                     break;
-                // 9.4.11 <table:named-range>
 
                 case 'span':
                     break;
-                // <text:span>
 
                 case 'p':
                     if (Rn[1] === '/') textp = parse_text_p(str.slice(textpidx, Rn.index), textptag);
@@ -657,54 +579,42 @@ var parse_content_xml = (function() {
                         textpidx = Rn.index + Rn[0].length;
                     }
                     break;
-                // <text:p>
 
                 case 's':
                     break;
-                // <text:s>
 
                 case 'date':
                     break;
-                // <*:date>
 
                 case 'annotation':
                     break;
 
                 case 'object':
                     break;
-                // 10.4.6.2 <draw:object>
 
                 case 'title':
                     break;
-                // <*:title>
 
                 case 'desc':
                     break;
-                // <*:desc>
 
                 case 'database-ranges':
                     break;
-                // 9.4.14 <table:database-ranges>
 
                 case 'database-range':
                     break;
-                // 9.4.15 <table:database-range>
 
                 case 'filter':
                     break;
-                // 9.5.2 <table:filter>
 
                 case 'filter-and':
                     break;
-                // 9.5.3 <table:filter-and>
 
                 case 'filter-or':
                     break;
-                // 9.5.4 <table:filter-or>
 
                 case 'filter-condition':
                     break;
-                // 9.5.5 <table:filter-condition>
 
                 default:
                     if (opts.WTF) throw Rn;
@@ -718,13 +628,10 @@ var parse_content_xml = (function() {
         return out;
     };
 })();
-/* Part 3: Packages */
 
 var parse_ods = function parse_ods(zip, opts) {
-    //var manifest = parse_manifest(getzipdata(zip, 'META-INF/manifest.xml'));
     return parse_content_xml(getzipdata(zip, 'content.xml'), opts);
 };
 
 ODS.parse_ods = parse_ods;
-
 module.exports = ODS;

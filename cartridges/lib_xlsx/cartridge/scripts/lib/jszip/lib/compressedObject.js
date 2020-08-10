@@ -9,22 +9,11 @@ function CompressedObject() {
 }
 
 CompressedObject.prototype = {
-    /**
-     * Return the decompressed content in an unspecified format.
-     * The format will depend on the decompressor.
-     * @return {Object} the decompressed content.
-     */
     getContent: function getContent() {
-        return null; // see implementation
+        return null;
     },
-
-    /**
-     * Return the compressed content in an unspecified format.
-     * The format will depend on the compressed conten source.
-     * @return {Object} the compressed content.
-     */
     getCompressedContent: function getCompressedContent() {
-        return null; // see implementation
+        return null;
     }
 };
 module.exports = CompressedObject;

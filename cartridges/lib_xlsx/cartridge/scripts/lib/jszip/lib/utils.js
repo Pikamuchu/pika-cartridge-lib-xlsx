@@ -5,11 +5,6 @@ var support = require('./support');
 var compressions = require('./compressions');
 
 var nodeBuffer = require('./nodeBuffer');
-/**
- * Convert a string to a "binary string" : a string containing only char codes between 0 and 255.
- * @param {string} str the string to transform.
- * @return {String} the binary string.
- */
 
 exports.string2binary = function(str) {
     var result = '';
@@ -25,39 +20,25 @@ exports.arrayBuffer2Blob = function(buffer) {
     exports.checkSupport('blob');
 
     try {
-        // Blob constructor
         return new Blob([buffer], {
             type: 'application/zip'
         });
     } catch (e) {
         try {
-            // deprecated, browser only, old way
             var Builder =
                 window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
             var builder = new Builder();
             builder.append(buffer);
             return builder.getBlob('application/zip');
         } catch (e) {
-            // well, fuck ?!
             throw new Error("Bug : can't construct the Blob.");
         }
     }
 };
-/**
- * The identity function.
- * @param {Object} input the input.
- * @return {Object} the same input.
- */
 
 function identity(input) {
     return input;
 }
-/**
- * Fill in an array with a string.
- * @param {String} str the string to use.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to fill in (will be mutated).
- * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated array.
- */
 
 function stringToArrayLike(str, array) {
     for (var i = 0; i < str.length; ++i) {
@@ -66,22 +47,8 @@ function stringToArrayLike(str, array) {
 
     return array;
 }
-/**
- * Transform an array-like object to a string.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} array the array to transform.
- * @return {String} the result.
- */
 
 function arrayLikeToString(array) {
-    // Performances notes :
-    // --------------------
-    // String.fromCharCode.apply(null, array) is the fastest, see
-    // see http://jsperf.com/converting-a-uint8array-to-a-string/2
-    // but the stack is limited (and we can get huge arrays !).
-    //
-    // result += String.fromCharCode(array[i]); generate too many strings !
-    //
-    // This code is inspired by http://jsperf.com/arraybuffer-to-string-apply-performance/2
     var chunk = 65536;
     var result = [],
         len = array.length,
@@ -101,8 +68,7 @@ function arrayLikeToString(array) {
         }
     } catch (e) {
         canUseApply = false;
-    } // no apply : slow and painful algorithm
-    // default browser on android 4.*
+    }
 
     if (!canUseApply) {
         var resultStr = '';
@@ -132,12 +98,6 @@ function arrayLikeToString(array) {
 }
 
 exports.applyFromCharCode = arrayLikeToString;
-/**
- * Copy the data from an array-like to an other array-like.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayFrom the origin array.
- * @param {Array|ArrayBuffer|Uint8Array|Buffer} arrayTo the destination array which will be mutated.
- * @return {Array|ArrayBuffer|Uint8Array|Buffer} the updated destination array.
- */
 
 function arrayLikeToArrayLike(arrayFrom, arrayTo) {
     for (var i = 0; i < arrayFrom.length; i++) {
@@ -145,10 +105,9 @@ function arrayLikeToArrayLike(arrayFrom, arrayTo) {
     }
 
     return arrayTo;
-} // a matrix containing functions to transform everything into everything.
+}
 
-var transform = {}; // string to ?
-
+var transform = {};
 transform['string'] = {
     string: identity,
     array: function array(input) {
@@ -163,8 +122,7 @@ transform['string'] = {
     nodebuffer: function nodebuffer(input) {
         return stringToArrayLike(input, nodeBuffer(input.length));
     }
-}; // array to ?
-
+};
 transform['array'] = {
     string: arrayLikeToString,
     array: identity,
@@ -177,8 +135,7 @@ transform['array'] = {
     nodebuffer: function nodebuffer(input) {
         return nodeBuffer(input);
     }
-}; // arraybuffer to ?
-
+};
 transform['arraybuffer'] = {
     string: function string(input) {
         return arrayLikeToString(new Uint8Array(input));
@@ -193,8 +150,7 @@ transform['arraybuffer'] = {
     nodebuffer: function nodebuffer(input) {
         return nodeBuffer(new Uint8Array(input));
     }
-}; // uint8array to ?
-
+};
 transform['uint8array'] = {
     string: arrayLikeToString,
     array: function array(input) {
@@ -207,8 +163,7 @@ transform['uint8array'] = {
     nodebuffer: function nodebuffer(input) {
         return nodeBuffer(input);
     }
-}; // nodebuffer to ?
-
+};
 transform['nodebuffer'] = {
     string: arrayLikeToString,
     array: function array(input) {
@@ -222,19 +177,9 @@ transform['nodebuffer'] = {
     },
     nodebuffer: identity
 };
-/**
- * Transform an input into any type.
- * The supported output type are : string, array, uint8array, arraybuffer, nodebuffer.
- * If no output type is specified, the unmodified input will be returned.
- * @param {String} outputType the output type.
- * @param {String|Array|ArrayBuffer|Uint8Array|Buffer} input the input to convert.
- * @throws {Error} an Error if the browser doesn't support the requested output type.
- */
 
 exports.transformTo = function(outputType, input) {
     if (!input) {
-        // undefined, null, etc
-        // an empty string won't harm.
         input = '';
     }
 
@@ -247,12 +192,6 @@ exports.transformTo = function(outputType, input) {
     var result = transform[inputType][outputType](input);
     return result;
 };
-/**
- * Return the type of the input.
- * The type will be in a format valid for JSZip.utils.transformTo : string, array, uint8array, arraybuffer.
- * @param {Object} input the input to identify.
- * @return {String} the (lowercase) type of the input.
- */
 
 exports.getTypeOf = function(input) {
     if (typeof input === 'string') {
@@ -275,11 +214,6 @@ exports.getTypeOf = function(input) {
         return 'arraybuffer';
     }
 };
-/**
- * Throw an exception if the type is not supported.
- * @param {String} type the type to check.
- * @throws {Error} an Error if the browser doesn't support the requested type.
- */
 
 exports.checkSupport = function(type) {
     var supported = support[type.toLowerCase()];
@@ -290,13 +224,7 @@ exports.checkSupport = function(type) {
 };
 
 exports.MAX_VALUE_16BITS = 65535;
-exports.MAX_VALUE_32BITS = -1; // well, "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF" is parsed as -1
-
-/**
- * Prettify a string read as binary.
- * @param {string} str the string to prettify.
- * @return {string} a pretty string.
- */
+exports.MAX_VALUE_32BITS = -1;
 
 exports.pretty = function(str) {
     var res = '',
@@ -310,11 +238,6 @@ exports.pretty = function(str) {
 
     return res;
 };
-/**
- * Find a compression registered in JSZip.
- * @param {string} compressionMethod the method magic to find.
- * @return {Object|null} the JSZip compression object, null if none found.
- */
 
 exports.findCompression = function(compressionMethod) {
     for (var method in compressions) {
@@ -329,12 +252,6 @@ exports.findCompression = function(compressionMethod) {
 
     return null;
 };
-/**
- * Cross-window, cross-Node-context regular expression detection
- * @param  {Object}  object Anything
- * @return {Boolean}        true if the object is a regular expression,
- * false otherwise
- */
 
 exports.isRegExp = function(object) {
     return Object.prototype.toString.call(object) === '[object RegExp]';

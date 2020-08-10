@@ -1,16 +1,9 @@
 'use strict';
 
-var _interopRequireDefault = require('@babel/runtime/helpers/interopRequireDefault');
-
-var _typeof2 = _interopRequireDefault(require('@babel/runtime/helpers/typeof'));
-
 var TYPED_OK =
     typeof Uint8Array !== 'undefined' && typeof Uint16Array !== 'undefined' && typeof Int32Array !== 'undefined';
 
-exports.assign = function(
-    obj
-    /*from1, from2, from3, ...*/
-) {
+exports.assign = function(obj) {
     var sources = Array.prototype.slice.call(arguments, 1);
 
     while (sources.length) {
@@ -20,7 +13,7 @@ exports.assign = function(
             continue;
         }
 
-        if ((0, _typeof2['default'])(source) !== 'object') {
+        if (typeof source !== 'object') {
             throw new TypeError(source + 'must be non-object');
         }
 
@@ -32,7 +25,7 @@ exports.assign = function(
     }
 
     return obj;
-}; // reduce buffer size, avoiding mem copy
+};
 
 exports.shrinkBuf = function(buf, size) {
     if (buf.length === size) {
@@ -52,21 +45,19 @@ var fnTyped = {
         if (src.subarray && dest.subarray) {
             dest.set(src.subarray(src_offs, src_offs + len), dest_offs);
             return;
-        } // Fallback to ordinary array
+        }
 
         for (var i = 0; i < len; i++) {
             dest[dest_offs + i] = src[src_offs + i];
         }
     },
-    // Join array of chunks to single array.
     flattenChunks: function flattenChunks(chunks) {
-        var i, l, len, pos, chunk, result; // calculate data length
-
+        var i, l, len, pos, chunk, result;
         len = 0;
 
         for (i = 0, l = chunks.length; i < l; i++) {
             len += chunks[i].length;
-        } // join chunks
+        }
 
         result = new Uint8Array(len);
         pos = 0;
@@ -86,12 +77,10 @@ var fnUntyped = {
             dest[dest_offs + i] = src[src_offs + i];
         }
     },
-    // Join array of chunks to single array.
     flattenChunks: function flattenChunks(chunks) {
         return [].concat.apply([], chunks);
     }
-}; // Enable/Disable typed arrays use, for testing
-//
+};
 
 exports.setTyped = function(on) {
     if (on) {

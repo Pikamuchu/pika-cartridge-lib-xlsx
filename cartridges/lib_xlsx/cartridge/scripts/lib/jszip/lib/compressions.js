@@ -3,10 +3,10 @@
 exports.STORE = {
     magic: '\x00\x00',
     compress: function compress(content) {
-        return content; // no compression
+        return content;
     },
     uncompress: function uncompress(content) {
-        return content; // no compression
+        return content;
     },
     compressInputType: null,
     uncompressInputType: null

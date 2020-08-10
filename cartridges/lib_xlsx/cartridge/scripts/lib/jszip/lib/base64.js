@@ -1,6 +1,6 @@
-'use strict'; // private property
+'use strict';
 
-var _keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='; // public method for encoding
+var _keyStr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
 
 exports.encode = function(input, utf8) {
     var output = '';
@@ -26,7 +26,7 @@ exports.encode = function(input, utf8) {
     }
 
     return output;
-}; // public method for decoding
+};
 
 exports.decode = function(input, utf8) {
     var output = '';

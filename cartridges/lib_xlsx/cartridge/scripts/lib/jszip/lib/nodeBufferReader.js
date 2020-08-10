@@ -9,9 +9,6 @@ function NodeBufferReader(data) {
 }
 
 NodeBufferReader.prototype = new Uint8ArrayReader();
-/**
- * @see DataReader.readData
- */
 
 NodeBufferReader.prototype.readData = function(size) {
     this.checkOffset(size);

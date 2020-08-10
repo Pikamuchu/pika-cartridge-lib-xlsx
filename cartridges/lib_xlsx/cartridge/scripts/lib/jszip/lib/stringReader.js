@@ -16,27 +16,17 @@ function StringReader(data, optimizedBinaryString) {
 }
 
 StringReader.prototype = new DataReader();
-/**
- * @see DataReader.byteAt
- */
 
 StringReader.prototype.byteAt = function(i) {
     return this.data.charCodeAt(i);
 };
-/**
- * @see DataReader.lastIndexOfSignature
- */
 
 StringReader.prototype.lastIndexOfSignature = function(sig) {
     return this.data.lastIndexOf(sig);
 };
-/**
- * @see DataReader.readData
- */
 
 StringReader.prototype.readData = function(size) {
-    this.checkOffset(size); // this will work because the constructor applied the "& 0xff" mask.
-
+    this.checkOffset(size);
     var result = this.data.slice(this.index, this.index + size);
     this.index += size;
     return result;

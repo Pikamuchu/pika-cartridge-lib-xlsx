@@ -260,12 +260,6 @@ var table = [
     0x5a05df1b,
     0x2d02ef8d
 ];
-/**
- *
- *  Javascript crc32
- *  http://www.webtoolkit.info/
- *
- */
 
 module.exports = function crc32(input, crc) {
     if (typeof input === 'undefined' || !input.length) {
@@ -291,4 +285,4 @@ module.exports = function crc32(input, crc) {
     }
 
     return crc ^ -1;
-}; // vim: set shiftwidth=4 softtabstop=4:
+};

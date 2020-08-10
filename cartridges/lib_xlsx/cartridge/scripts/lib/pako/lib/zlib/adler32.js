@@ -1,6 +1,4 @@
-'use strict'; // Note: adler32 takes 12% for level 0 and 2% for level 6.
-// It doesn't worth to make additional optimizationa as in original.
-// Small size is preferable.
+'use strict';
 
 function adler32(adler, buf, len, pos) {
     var s1 = (adler & 0xffff) | 0,
@@ -8,9 +6,6 @@ function adler32(adler, buf, len, pos) {
         n = 0;
 
     while (len !== 0) {
-        // Set limit ~ twice less than 5552, to keep
-        // s2 in 31-bits, because we force signed ints.
-        // in other case %= will fail.
         n = len > 2000 ? 2000 : len;
         len -= n;
 

@@ -1,7 +1,4 @@
-'use strict'; // Note: we can't get significant speed boost here.
-// So write code to minimize size - no pregenerated tables
-// and array tools dependencies.
-// Use ordinary array, since untyped makes no boost here
+'use strict';
 
 function makeTable() {
     var c,
@@ -18,7 +15,7 @@ function makeTable() {
     }
 
     return table;
-} // Create table on load. Just 255 signed longs. Not a problem.
+}
 
 var crcTable = makeTable();
 
@@ -31,7 +28,7 @@ function crc32(crc, buf, len, pos) {
         crc = (crc >>> 8) ^ t[(crc ^ buf[i]) & 0xff];
     }
 
-    return crc ^ -1; // >>> 0;
+    return crc ^ -1;
 }
 
 module.exports = crc32;

@@ -6,14 +6,7 @@ var utils = require('./utils');
 
 var CompressedObject = require('./compressedObject');
 
-var jszipProto = require('./object'); // class ZipEntry {{{
-
-/**
- * An entry in the zip file.
- * @constructor
- * @param {Object} options Options of the current file.
- * @param {Object} loadOptions Options for loading the stream.
- */
+var jszipProto = require('./object');
 
 function ZipEntry(options, loadOptions) {
     this.options = options;
@@ -21,31 +14,12 @@ function ZipEntry(options, loadOptions) {
 }
 
 ZipEntry.prototype = {
-    /**
-     * say if the file is encrypted.
-     * @return {boolean} true if the file is encrypted, false otherwise.
-     */
     isEncrypted: function isEncrypted() {
-        // bit 1 is set
         return (this.bitFlag & 0x0001) === 0x0001;
     },
-
-    /**
-     * say if the file has utf-8 filename/comment.
-     * @return {boolean} true if the filename/comment is in utf-8, false otherwise.
-     */
     useUTF8: function useUTF8() {
-        // bit 11 is set
         return (this.bitFlag & 0x0800) === 0x0800;
     },
-
-    /**
-     * Prepare the function used to generate the compressed content from this ZipFile.
-     * @param {DataReader} reader the reader to use.
-     * @param {number} from the offset from where we should read the data.
-     * @param {number} length the length of the data to read.
-     * @return {Function} the callback to get the compressed content (the type depends of the DataReader class).
-     */
     prepareCompressedContent: function prepareCompressedContent(reader, from, length) {
         return function() {
             var previousIndex = reader.index;
@@ -55,16 +29,6 @@ ZipEntry.prototype = {
             return compressedFileData;
         };
     },
-
-    /**
-     * Prepare the function used to generate the uncompressed content from this ZipFile.
-     * @param {DataReader} reader the reader to use.
-     * @param {number} from the offset from where we should read the data.
-     * @param {number} length the length of the data to read.
-     * @param {JSZip.compression} compression the compression used on this file.
-     * @param {number} uncompressedSize the uncompressed size to expect.
-     * @return {Function} the callback to get the uncompressed content (the type depends of the DataReader class).
-     */
     prepareContent: function prepareContent(reader, from, length, compression, uncompressedSize) {
         return function() {
             var compressedFileData = utils.transformTo(compression.uncompressInputType, this.getCompressedContent());
@@ -77,33 +41,11 @@ ZipEntry.prototype = {
             return uncompressedFileData;
         };
     },
-
-    /**
-     * Read the local part of a zip file and add the info in this object.
-     * @param {DataReader} reader the reader to use.
-     */
     readLocalPart: function readLocalPart(reader) {
-        var compression, localExtraFieldsLength; // we already know everything from the central dir !
-        // If the central dir data are false, we are doomed.
-        // On the bright side, the local part is scary  : zip64, data descriptors, both, etc.
-        // The less data we get here, the more reliable this should be.
-        // Let's skip the whole header and dash to the data !
-
-        reader.skip(22); // in some zip created on windows, the filename stored in the central dir contains \ instead of /.
-        // Strangely, the filename here is OK.
-        // I would love to treat these zip files as corrupted (see http://www.info-zip.org/FAQ.html#backslashes
-        // or APPNOTE#4.4.17.1, "All slashes MUST be forward slashes '/'") but there are a lot of bad zip generators...
-        // Search "unzip mismatching "local" filename continuing with "central" filename version" on
-        // the internet.
-        //
-        // I think I see the logic here : the central directory is used to display
-        // content and the local directory is used to extract the files. Mixing / and \
-        // may be used to display \ to windows users and use / when extracting the files.
-        // Unfortunately, this lead also to some issues : http://seclists.org/fulldisclosure/2009/Sep/394
-
+        var compression, localExtraFieldsLength;
+        reader.skip(22);
         this.fileNameLength = reader.readInt(2);
-        localExtraFieldsLength = reader.readInt(2); // can't be sure this will be the same as the central dir
-
+        localExtraFieldsLength = reader.readInt(2);
         this.fileName = reader.readString(this.fileNameLength);
         reader.skip(localExtraFieldsLength);
 
@@ -117,7 +59,6 @@ ZipEntry.prototype = {
         compression = utils.findCompression(this.compressionMethod);
 
         if (compression === null) {
-            // no compression found
             throw new Error(
                 'Corrupted zip : compression ' +
                     utils.pretty(this.compressionMethod) +
@@ -144,7 +85,7 @@ ZipEntry.prototype = {
             this.compressedSize,
             compression,
             this.uncompressedSize
-        ); // we need to compute the crc32...
+        );
 
         if (this.loadOptions.checkCRC32) {
             this.decompressed = utils.transformTo('string', this.decompressed.getContent());
@@ -154,11 +95,6 @@ ZipEntry.prototype = {
             }
         }
     },
-
-    /**
-     * Read the central part of a zip file and add the info in this object.
-     * @param {DataReader} reader the reader to use.
-     */
     readCentralPart: function readCentralPart(reader) {
         this.versionMadeBy = reader.readString(2);
         this.versionNeeded = reader.readInt(2);
@@ -183,22 +119,15 @@ ZipEntry.prototype = {
         this.fileName = reader.readString(this.fileNameLength);
         this.readExtraFields(reader);
         this.parseZIP64ExtraField(reader);
-        this.fileComment = reader.readString(this.fileCommentLength); // warning, this is true only for zip with madeBy == DOS (plateform dependent feature)
-
+        this.fileComment = reader.readString(this.fileCommentLength);
         this.dir = this.externalFileAttributes & 0x00000010 ? true : false;
     },
-
-    /**
-     * Parse the ZIP64 extra field and merge the info in the current ZipEntry.
-     * @param {DataReader} reader the reader to use.
-     */
     parseZIP64ExtraField: function parseZIP64ExtraField(reader) {
         if (!this.extraFields[0x0001]) {
             return;
-        } // should be something, preparing the extra reader
+        }
 
-        var extraReader = new StringReader(this.extraFields[0x0001].value); // I really hope that these 64bits integer can fit in 32 bits integer, because js
-        // won't let us have more.
+        var extraReader = new StringReader(this.extraFields[0x0001].value);
 
         if (this.uncompressedSize === utils.MAX_VALUE_32BITS) {
             this.uncompressedSize = extraReader.readInt(8);
@@ -216,11 +145,6 @@ ZipEntry.prototype = {
             this.diskNumberStart = extraReader.readInt(4);
         }
     },
-
-    /**
-     * Read the central part of a zip file and add the info in this object.
-     * @param {DataReader} reader the reader to use.
-     */
     readExtraFields: function readExtraFields(reader) {
         var start = reader.index,
             extraFieldId,
@@ -239,10 +163,6 @@ ZipEntry.prototype = {
             };
         }
     },
-
-    /**
-     * Apply an UTF8 transformation if needed.
-     */
     handleUTF8: function handleUTF8() {
         if (this.useUTF8()) {
             this.fileName = jszipProto.utf8decode(this.fileName);
@@ -261,20 +181,15 @@ ZipEntry.prototype = {
             }
         }
     },
-
-    /**
-     * Find the unicode path declared in the extra field, if any.
-     * @return {String} the unicode path, null otherwise.
-     */
     findExtraFieldUnicodePath: function findExtraFieldUnicodePath() {
         var upathField = this.extraFields[0x7075];
 
         if (upathField) {
-            var extraReader = new StringReader(upathField.value); // wrong version
+            var extraReader = new StringReader(upathField.value);
 
             if (extraReader.readInt(1) !== 1) {
                 return null;
-            } // the crc of the filename changed, this field is out of date.
+            }
 
             if (jszipProto.crc32(this.fileName) !== extraReader.readInt(4)) {
                 return null;
@@ -285,20 +200,15 @@ ZipEntry.prototype = {
 
         return null;
     },
-
-    /**
-     * Find the unicode comment declared in the extra field, if any.
-     * @return {String} the unicode comment, null otherwise.
-     */
     findExtraFieldUnicodeComment: function findExtraFieldUnicodeComment() {
         var ucommentField = this.extraFields[0x6375];
 
         if (ucommentField) {
-            var extraReader = new StringReader(ucommentField.value); // wrong version
+            var extraReader = new StringReader(ucommentField.value);
 
             if (extraReader.readInt(1) !== 1) {
                 return null;
-            } // the crc of the comment changed, this field is out of date.
+            }
 
             if (jszipProto.crc32(this.fileComment) !== extraReader.readInt(4)) {
                 return null;
